@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image"; // <--- ADDED THIS IMPORT
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 
 // --- TYPES ---
@@ -257,8 +257,8 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen p-6 font-sans transition-colors duration-700 ease-in-out ${t.bg} ${t.textMain}`}>
-      {/* 🔮 CUSTOM CSS FOR SMOOTH ANIMATIONS */}
+    <div className={`min-h-screen p-4 md:p-6 font-sans transition-colors duration-700 ease-in-out ${t.bg} ${t.textMain}`}>
+      {/* 🔮 CUSTOM CSS */}
       <style jsx global>{`
         @keyframes slideUpFade {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
@@ -283,12 +283,12 @@ export default function Home() {
 
       <div className="max-w-4xl mx-auto">
         
-        {/* HEADER WITH LOGO */}
-        <header className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        {/* HEADER */}
+        <header className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-4 md:gap-6">
           
-          <div className="flex items-center gap-4">
-            {/* The Logo Image */}
-            <div className="relative w-20 h-20 shrink-0 rounded-2xl overflow-hidden shadow-xl border-2 border-white/50 group hover:scale-105 transition-transform duration-300">
+          {/* Logo & Title */}
+          <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-center md:justify-start">
+            <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl overflow-hidden shadow-xl border-2 border-white/50 group hover:scale-105 transition-transform duration-300">
               <Image 
                 src="/logo.png" 
                 alt="SkillFlow Logo" 
@@ -296,31 +296,29 @@ export default function Home() {
                 className="object-cover bg-white" 
               />
             </div>
-            
-            {/* The Text */}
             <div className="text-center md:text-left">
-              <h1 className={`text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-1`}>
+              <h1 className={`text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-1`}>
                 SkillFlow 🚀
               </h1>
-              <p className={`${t.textSec} font-medium text-sm tracking-wide`}>
+              <p className={`${t.textSec} font-medium text-xs md:text-sm tracking-wide`}>
                 The Adaptive AI Learning Ecosystem
               </p>
             </div>
           </div>
           
-          <div className="flex gap-3 items-center z-50">
-            {/* THEME DROPDOWN */}
+          {/* Controls */}
+          <div className="flex gap-2 items-center z-50 w-full md:w-auto justify-center">
             <CustomSelect 
               value={theme}
               onChange={setTheme}
               options={Object.keys(THEMES).map(k => ({ label: THEMES[k].name, value: k }))}
               t={t}
-              width="w-40"
+              width="w-36 md:w-40"
             />
 
             <button
               onClick={() => setFocusMode(!focusMode)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold shadow-lg transition-all btn-press ${
+              className={`flex items-center gap-2 px-4 py-3 md:px-5 md:py-3 rounded-2xl font-bold shadow-lg transition-all btn-press text-sm md:text-base ${
                 focusMode ? `${t.button} ring-4 ring-opacity-50` : `${t.card} ${t.textMain} hover-scale`
               }`}
             >
@@ -329,18 +327,17 @@ export default function Home() {
           </div>
         </header>
 
-        {/* 🎵 SMOOTH MUSIC PLAYER */}
+        {/* 🎵 RESPONSIVE MUSIC PLAYER */}
         {focusMode && (
-          <div className={`fixed bottom-4 right-4 z-40 w-80 p-4 rounded-3xl shadow-2xl border flex flex-col gap-3 animate-spring origin-bottom-right ${theme === 'darkRed' ? 'bg-black/90 border-red-900' : 'bg-white/90 border-indigo-200 backdrop-blur-xl'}`}>
+          // Mobile: Fixed Bottom (Full Width) | Desktop: Bottom Right Floating
+          <div className={`fixed bottom-0 left-0 right-0 md:bottom-4 md:left-auto md:right-4 z-50 w-full md:w-80 p-4 rounded-t-3xl md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-2xl border-t md:border border flex flex-col gap-3 animate-spring ${theme === 'darkRed' ? 'bg-black/95 border-red-900' : 'bg-white/95 border-indigo-200 backdrop-blur-xl'}`}>
             <iframe 
-              className="rounded-xl w-full h-40 shadow-inner"
+              className="rounded-xl w-full h-32 md:h-40 shadow-inner"
               src={`https://www.youtube.com/embed/${musicId}?autoplay=1&controls=0&loop=1`} 
               title="Music" 
               allow="autoplay"
             ></iframe>
             <div className="flex flex-col gap-2 relative">
-              
-              {/* MUSIC SELECTOR */}
               <CustomSelect 
                 value={musicId}
                 onChange={setMusicId}
@@ -350,7 +347,6 @@ export default function Home() {
                 ]}
                 t={{ ...t, input: "bg-gray-800 border-gray-600 text-white" }}
               />
-
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -365,9 +361,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* 📖 POP-UP DICTIONARY */}
+        {/* 📖 RESPONSIVE DICTIONARY */}
         {definition && (
-          <div className="fixed top-20 right-4 z-50 w-72 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border-l-4 border-yellow-400 animate-pop origin-top-right">
+          // Mobile: Top Center (with margin) | Desktop: Top Right Floating
+          <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 z-50 md:w-72 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border-l-4 border-yellow-400 animate-pop">
             <div className="flex justify-between items-start mb-2">
               <h4 className="text-xl font-bold capitalize text-gray-800">{definition.word}</h4>
               <button onClick={() => setDefinition(null)} className="text-gray-400 hover:text-red-500 transition-colors text-xl font-bold">×</button>
@@ -378,25 +375,20 @@ export default function Home() {
           </div>
         )}
 
-        {/* INPUT BOX */}
-        <div className={`p-8 rounded-3xl shadow-xl space-y-6 border ${t.card} mb-10 transition-all duration-300 relative z-10`}>
+        {/* MAIN INPUT CARD */}
+        <div className={`p-5 md:p-8 rounded-3xl shadow-xl space-y-5 md:space-y-6 border ${t.card} mb-10 transition-all duration-300 relative z-10`}>
           
-          {/* MODE SWITCHER */}
+          {/* Mode Switcher */}
           <div className={`flex p-1.5 rounded-2xl ${theme === 'darkRed' ? 'bg-gray-800' : 'bg-gray-100'}`}>
-            <button
-              onClick={() => setMode("lesson")}
-              className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-300 ${mode === "lesson" ? `${t.card} shadow-md ${t.textMain} scale-[1.02]` : "text-gray-500 hover:text-gray-400"}`}
-            >
+            <button onClick={() => setMode("lesson")} className={`flex-1 py-3 md:py-3.5 rounded-xl font-bold text-sm md:text-base transition-all duration-300 ${mode === "lesson" ? `${t.card} shadow-md ${t.textMain} scale-[1.02]` : "text-gray-500 hover:text-gray-400"}`}>
               📚 Lesson Mode
             </button>
-            <button
-              onClick={() => setMode("quiz")}
-              className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-300 ${mode === "quiz" ? `${t.card} shadow-md ${t.textMain} scale-[1.02]` : "text-gray-500 hover:text-gray-400"}`}
-            >
+            <button onClick={() => setMode("quiz")} className={`flex-1 py-3 md:py-3.5 rounded-xl font-bold text-sm md:text-base transition-all duration-300 ${mode === "quiz" ? `${t.card} shadow-md ${t.textMain} scale-[1.02]` : "text-gray-500 hover:text-gray-400"}`}>
               📝 Quiz Maker
             </button>
           </div>
 
+          {/* Settings Row */}
           <div className="flex flex-col sm:flex-row gap-4 relative z-20">
             <div className="flex-1">
               <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Language</label>
@@ -422,24 +414,24 @@ export default function Home() {
             <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Topic</label>
             <input
               type="text"
-              placeholder={mode === "quiz" ? "Topic for Quiz (e.g. World War 2)" : "Topic for Lesson (e.g. Gravity)"}
-              className={`w-full p-4 border-2 rounded-2xl outline-none text-lg transition-all focus:ring-4 focus:ring-opacity-20 ${t.input}`}
+              placeholder={mode === "quiz" ? "Topic (e.g. World War 2)" : "Topic (e.g. Gravity)"}
+              className={`w-full p-4 border-2 rounded-2xl outline-none text-base md:text-lg transition-all focus:ring-4 focus:ring-opacity-20 ${t.input}`}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && startLearning()}
             />
           </div>
 
-          <div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover-scale ${file ? "border-green-500 bg-green-50/10" : `border-gray-400 hover:border-current hover:bg-gray-50/5`}`}>
+          <div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-2xl p-5 md:p-6 text-center cursor-pointer transition-all duration-300 hover-scale ${file ? "border-green-500 bg-green-50/10" : `border-gray-400 hover:border-current hover:bg-gray-50/5`}`}>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            {file ? <span className="text-green-600 font-bold flex items-center justify-center gap-2">✅ Attached: {file.name}</span> : <span className={`${t.textSec} font-medium`}>📸 Click to Upload Image / PDF</span>}
+            {file ? <span className="text-green-600 font-bold flex items-center justify-center gap-2 text-sm md:text-base">✅ Attached: {file.name}</span> : <span className={`${t.textSec} font-medium text-sm md:text-base`}>📸 Click to Upload Image / PDF</span>}
           </div>
 
-          <button onClick={startLearning} disabled={loading} className={`w-full p-5 rounded-2xl font-bold text-xl transition-all btn-press shadow-xl flex justify-center items-center gap-3 ${t.button} ${loading ? 'opacity-90 cursor-wait' : 'hover:-translate-y-1'}`}>
+          <button onClick={startLearning} disabled={loading} className={`w-full p-4 md:p-5 rounded-2xl font-bold text-lg md:text-xl transition-all btn-press shadow-xl flex justify-center items-center gap-3 ${t.button} ${loading ? 'opacity-90 cursor-wait' : 'hover:-translate-y-1'}`}>
             {loading ? (
               <div className="flex flex-col items-center">
-                <span className="flex items-center gap-2"><span className="animate-spin text-2xl">⚡</span> Thinking...</span>
-                <span className="text-xs font-normal opacity-90 mt-1">🧠 Fact: {loadingFact}</span>
+                <span className="flex items-center gap-2"><span className="animate-spin text-xl md:text-2xl">⚡</span> Thinking...</span>
+                <span className="text-[10px] md:text-xs font-normal opacity-90 mt-1 line-clamp-1">🧠 Fact: {loadingFact}</span>
               </div>
             ) : mode === "quiz" ? "Generate Quiz 📝" : "Start Lesson 🚀"}
           </button>
@@ -447,19 +439,17 @@ export default function Home() {
           {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-pop">❌ {error}</div>}
         </div>
 
-        {/* --- RESULTS AREA (Spring Animation) --- */}
-        
-        {/* CASE A: LESSON MODE */}
+        {/* --- RESULTS AREA --- */}
         {data && data.type === "lesson" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-spring">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-spring">
             <div className="lg:col-span-2 space-y-6">
-              <div className={`p-8 rounded-3xl shadow-lg border-l-8 relative ${t.card} ${t.accent}`}>
-                 <div className="absolute top-4 right-4 text-xs opacity-50 font-bold uppercase tracking-widest">Interactive Text</div>
-                <h2 className={`text-4xl font-extrabold mb-6 ${t.textMain}`}>{data.title}</h2>
+              <div className={`p-6 md:p-8 rounded-3xl shadow-lg border-l-8 relative ${t.card} ${t.accent}`}>
+                 <div className="hidden md:block absolute top-4 right-4 text-xs opacity-50 font-bold uppercase tracking-widest">Interactive Text</div>
+                <h2 className={`text-2xl md:text-4xl font-extrabold mb-4 md:mb-6 ${t.textMain}`}>{data.title}</h2>
                 <div className={`prose prose-lg leading-relaxed mb-6 whitespace-pre-wrap cursor-text selection:bg-yellow-200 selection:text-black ${theme === 'darkRed' ? 'prose-invert text-gray-300' : 'text-gray-600'}`} onDoubleClick={handleWordClick}>
                   {data.explanation}
                 </div>
-                <div className={`p-6 rounded-2xl border flex items-start gap-4 transition-transform hover:scale-[1.01] ${theme === 'darkRed' ? 'bg-gray-800/50 border-gray-700' : 'bg-amber-50 border-amber-100'}`}>
+                <div className={`p-5 md:p-6 rounded-2xl border flex flex-col md:flex-row items-start gap-4 transition-transform hover:scale-[1.01] ${theme === 'darkRed' ? 'bg-gray-800/50 border-gray-700' : 'bg-amber-50 border-amber-100'}`}>
                   <span className="text-3xl">💡</span>
                   <div>
                     <h4 className={`font-bold text-lg mb-1 ${theme === 'darkRed' ? 'text-gray-200' : 'text-amber-800'}`}>Analogy</h4>
@@ -497,17 +487,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* CASE B: QUIZ MAKER MODE */}
+        {/* QUIZ MODE */}
         {data && data.type === "quiz" && (
           <div className="space-y-6 animate-spring">
-            <div className={`p-8 rounded-3xl shadow-xl border-t-8 ${t.card} ${t.accent}`}>
-              <h2 className={`text-4xl font-extrabold mb-3 ${t.textMain}`}>{data.title}</h2>
-              <p className={`mb-8 text-lg ${t.textSec}`}>Test your knowledge! Select an answer for each question.</p>
+            <div className={`p-6 md:p-8 rounded-3xl shadow-xl border-t-8 ${t.card} ${t.accent}`}>
+              <h2 className={`text-2xl md:text-4xl font-extrabold mb-3 ${t.textMain}`}>{data.title}</h2>
+              <p className={`mb-8 text-base md:text-lg ${t.textSec}`}>Test your knowledge! Select an answer for each question.</p>
               
-              <div className="space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 {data.questions.map((q, idx) => (
-                  <div key={idx} className={`p-6 rounded-2xl border transition-all hover:shadow-md ${theme === 'darkRed' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/50 border-gray-200'}`}>
-                    <p className={`font-bold text-xl mb-5 ${t.textMain}`}><span className="opacity-40 text-sm align-middle mr-2">#{idx+1}</span> {q.question}</p>
+                  <div key={idx} className={`p-5 md:p-6 rounded-2xl border transition-all hover:shadow-md ${theme === 'darkRed' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/50 border-gray-200'}`}>
+                    <p className={`font-bold text-lg md:text-xl mb-4 md:mb-5 ${t.textMain}`}><span className="opacity-40 text-sm align-middle mr-2">#{idx+1}</span> {q.question}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {q.options.map((opt) => {
                         let btnClass = "";
@@ -516,7 +506,6 @@ export default function Home() {
                         } else {
                            btnClass = "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 text-gray-700";
                         }
-
                         if (quizSubmitted) {
                           if (opt === q.correct_answer) btnClass = "bg-green-600 border-green-500 text-white font-bold shadow-lg scale-[1.02]";
                           else if (opt === quizAnswers[idx]) btnClass = "bg-red-600 border-red-500 text-white opacity-60";
@@ -524,12 +513,11 @@ export default function Home() {
                         } else if (quizAnswers[idx] === opt) {
                           btnClass = `${t.button} border-transparent shadow-md scale-[1.02]`;
                         }
-
                         return (
                           <button 
                             key={opt}
                             onClick={() => handleMultiQuizSelect(idx, opt)}
-                            className={`p-4 rounded-xl border-2 text-left transition-all duration-200 font-medium ${btnClass}`}
+                            className={`p-4 rounded-xl border-2 text-left transition-all duration-200 font-medium text-sm md:text-base ${btnClass}`}
                             disabled={quizSubmitted}
                           >
                             {opt}
@@ -540,31 +528,20 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-
-              {/* QUIZ CONTROLS */}
-              <div className={`mt-10 flex items-center justify-between border-t pt-8 ${theme === 'darkRed' ? 'border-gray-700' : 'border-gray-100'}`}>
+              <div className={`mt-10 flex flex-col md:flex-row items-center justify-between border-t pt-8 gap-4 ${theme === 'darkRed' ? 'border-gray-700' : 'border-gray-100'}`}>
                 {!quizSubmitted ? (
-                  <button 
-                    onClick={() => setQuizSubmitted(true)}
-                    className={`px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}
-                  >
+                  <button onClick={() => setQuizSubmitted(true)} className={`w-full md:w-auto px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}>
                     Submit Quiz 📝
                   </button>
                 ) : (
-                  <div className="flex items-center gap-6 animate-pop">
-                    <span className={`text-3xl font-extrabold ${t.textMain}`}>
+                  <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 animate-pop w-full md:w-auto">
+                    <span className={`text-2xl md:text-3xl font-extrabold ${t.textMain}`}>
                       Your Score: <span className={calculateScore() >= 3 ? "text-green-500 drop-shadow-sm" : "text-red-500"}>{calculateScore()} / {data.questions.length}</span>
                     </span>
-                    <button 
-                      onClick={startLearning}
-                      className={`underline font-bold text-lg hover-scale ${t.textMain}`}
-                    >
-                      Try Another?
-                    </button>
+                    <button onClick={startLearning} className={`underline font-bold text-lg hover-scale ${t.textMain}`}>Try Another?</button>
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         )}
@@ -579,7 +556,6 @@ function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -596,11 +572,11 @@ function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
     <div className={`relative ${width}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-4 border-2 rounded-2xl outline-none flex justify-between items-center transition-all hover:border-current ${t.input} ${isOpen ? 'ring-4 ring-opacity-10' : ''}`}
+        className={`w-full p-3 md:p-4 border-2 rounded-2xl outline-none flex justify-between items-center transition-all hover:border-current text-sm md:text-base ${t.input} ${isOpen ? 'ring-4 ring-opacity-10' : ''}`}
       >
         <span className="truncate font-medium">{selectedLabel}</span>
         <svg 
-          className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+          className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
           fill="none" stroke="currentColor" viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -614,7 +590,7 @@ function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
               <div
                 key={opt.value}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${t.dropdownHover || 'hover:bg-gray-100'} ${value === opt.value ? 'font-bold bg-gray-50/50' : ''}`}
+                className={`p-3 cursor-pointer transition-colors flex items-center justify-between text-sm md:text-base ${t.dropdownHover || 'hover:bg-gray-100'} ${value === opt.value ? 'font-bold bg-gray-50/50' : ''}`}
               >
                 {opt.label}
                 {value === opt.value && <span className="text-green-500">✓</span>}
