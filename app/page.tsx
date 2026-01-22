@@ -217,7 +217,7 @@ export default function Home() {
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="text-center md:text-left">
             <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">
-              SkillFlow 7.0 🚀
+              SkillFlow 🚀
             </h1>
             <p className="text-gray-600">AI Tutor • Quiz Maker • Vision</p>
           </div>
