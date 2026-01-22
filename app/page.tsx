@@ -56,11 +56,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-6 font-sans text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-6 font-sans text-gray-800">
       <div className="max-w-3xl mx-auto">
         <header className="text-center mb-10">
-          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-            SkillFlow 🧠
+          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">
+            SkillFlow 2.0 🚀
           </h1>
           <p className="text-gray-600">Your AI-Powered Personal Tutor</p>
         </header>
@@ -72,7 +72,7 @@ export default function Home() {
             <input
               type="text"
               placeholder="e.g. Quantum Physics, Python Loops, French Revolution..."
-              className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors text-lg"
+              className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors text-lg"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && startLearning()}
@@ -88,7 +88,7 @@ export default function Home() {
                   onClick={() => setLevel(l)}
                   className={`py-3 px-4 rounded-lg font-medium transition-all ${
                     level === l
-                      ? "bg-blue-600 text-white shadow-lg scale-105"
+                      ? "bg-purple-600 text-white shadow-lg scale-105"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -101,7 +101,7 @@ export default function Home() {
           <button
             onClick={startLearning}
             disabled={loading || !topic}
-            className="w-full bg-black text-white p-4 rounded-xl font-bold text-lg hover:opacity-80 disabled:opacity-50 transition-all flex justify-center items-center gap-2"
+            className="w-full bg-purple-600 text-white p-4 rounded-xl font-bold text-lg hover:bg-purple-700 disabled:opacity-50 transition-all flex justify-center items-center gap-2 shadow-lg"
           >
             {loading ? (
               <>
@@ -124,7 +124,7 @@ export default function Home() {
           <div className="mt-8 space-y-6 animate-fade-in-up">
             
             {/* 1. Main Content */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-l-8 border-blue-500">
+            <div className="bg-white p-8 rounded-2xl shadow-lg border-l-8 border-purple-500">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">{lesson.title}</h2>
               <div className="prose prose-lg text-gray-600 leading-relaxed mb-6">
                 {lesson.explanation}
@@ -147,7 +147,7 @@ export default function Home() {
               <ul className="space-y-3">
                 {lesson.key_points.map((point, i) => (
                   <li key={i} className="flex gap-3 text-gray-700">
-                    <span className="bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    <span className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0">
                       {i + 1}
                     </span>
                     {point}
@@ -157,7 +157,7 @@ export default function Home() {
             </div>
 
             {/* 3. Quiz */}
-            <div className="bg-gradient-to-br from-indigo-900 to-blue-900 p-8 rounded-2xl shadow-xl text-white">
+            <div className="bg-gradient-to-br from-purple-900 to-indigo-900 p-8 rounded-2xl shadow-xl text-white">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                 🧠 Quick Quiz
               </h3>
