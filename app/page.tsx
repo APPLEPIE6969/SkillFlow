@@ -41,13 +41,13 @@ const LANGUAGES = [
   { code: "Chinese", flag: "🇨🇳" },
 ];
 
-// 🎵 MUSIC PRESETS
+// 🎵 MUSIC PRESETS (Fixed Acoustic Link)
 const MUSIC_PRESETS = [
   { name: "☕ Lofi Girl", id: "jfKfPfyJRdk" },
   { name: "🎹 Classical Piano", id: "mIYzp5rcTvU" },
   { name: "🌧️ Rain Sounds", id: "mPZkdNFkNps" },
   { name: "🌌 Synthwave", id: "4xDzrJKXOOY" },
-  { name: "🎸 Acoustic", id: "snPH_U16x7I" },
+  { name: "🎸 Acoustic", id: "zyDcEdTMjE8" }, // <--- UPDATED THIS LINK
 ];
 
 export default function Home() {
@@ -121,14 +121,14 @@ export default function Home() {
 
   // 🎵 Helper to get ID from any YouTube URL
   const handleCustomMusic = () => {
-    // Regex to match YouTube ID
+    // Regex matches standard links and the one you provided
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = customUrl.match(regExp);
     if (match && match[2].length === 11) {
       setMusicId(match[2]);
       setCustomUrl(""); // Clear input
     } else {
-      alert("Invalid YouTube URL. Try pasting the full link.");
+      alert("Could not find video ID. Try pasting a standard YouTube link.");
     }
   };
 
