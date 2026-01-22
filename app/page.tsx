@@ -63,7 +63,8 @@ const THEMES: Record<string, any> = {
     accent: "border-purple-500",
     quizBg: "bg-indigo-900 text-white",
     input: "bg-white/90 border-gray-200 text-gray-900 focus:border-purple-500",
-    highlight: "bg-purple-100 text-purple-600"
+    highlight: "bg-purple-100 text-purple-600",
+    dropdownHover: "hover:bg-purple-50"
   },
   darkRed: {
     name: "🔴 Cyber Red",
@@ -76,7 +77,8 @@ const THEMES: Record<string, any> = {
     accent: "border-red-600",
     quizBg: "bg-red-950 text-red-50 border border-red-900",
     input: "bg-gray-800 border-gray-700 text-white focus:border-red-500 placeholder-gray-500",
-    highlight: "bg-red-900/50 text-red-300"
+    highlight: "bg-red-900/50 text-red-300",
+    dropdownHover: "hover:bg-gray-800"
   },
   yellow: {
     name: "🐝 Bee Yellow",
@@ -89,7 +91,8 @@ const THEMES: Record<string, any> = {
     accent: "border-yellow-400",
     quizBg: "bg-stone-800 text-yellow-50",
     input: "bg-stone-50 border-stone-200 text-stone-800 focus:border-yellow-500",
-    highlight: "bg-yellow-100 text-yellow-800"
+    highlight: "bg-yellow-100 text-yellow-800",
+    dropdownHover: "hover:bg-yellow-100"
   }
 };
 
@@ -254,11 +257,15 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen p-6 font-sans transition-colors duration-700 ease-in-out ${t.bg} ${t.textMain}`}>
-      {/* 🔮 CUSTOM CSS FOR SMOOTH ANIMATIONS */}
+      {/* 🔮 CUSTOM CSS */}
       <style jsx global>{`
         @keyframes slideUpFade {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes popIn {
           0% { opacity: 0; transform: scale(0.5); }
@@ -266,6 +273,7 @@ export default function Home() {
           100% { opacity: 1; transform: scale(1); }
         }
         .animate-spring { animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-dropdown { animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .hover-scale { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .hover-scale:hover { transform: scale(1.02); }
@@ -274,7 +282,7 @@ export default function Home() {
 
       <div className="max-w-4xl mx-auto">
         
-        {/* HEADER & THEME SWITCHER */}
+        {/* HEADER */}
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="text-center md:text-left">
             <h1 className={`text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-2`}>
@@ -283,20 +291,19 @@ export default function Home() {
             <p className={`${t.textSec} font-medium`}>AI Tutor • Quiz Maker • Vision</p>
           </div>
           
-          <div className="flex gap-2">
-            <select 
+          <div className="flex gap-3 items-center z-50">
+            {/* NEW THEME DROPDOWN */}
+            <CustomSelect 
               value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className={`px-4 py-3 rounded-full font-bold shadow-sm outline-none cursor-pointer hover-scale transition-all ${t.card} ${t.textMain}`}
-            >
-              {Object.keys(THEMES).map(key => (
-                <option key={key} value={key}>{THEMES[key].name}</option>
-              ))}
-            </select>
+              onChange={setTheme}
+              options={Object.keys(THEMES).map(k => ({ label: THEMES[k].name, value: k }))}
+              t={t}
+              width="w-40"
+            />
 
             <button
               onClick={() => setFocusMode(!focusMode)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all btn-press ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold shadow-lg transition-all btn-press ${
                 focusMode ? `${t.button} ring-4 ring-opacity-50` : `${t.card} ${t.textMain} hover-scale`
               }`}
             >
@@ -305,29 +312,33 @@ export default function Home() {
           </div>
         </header>
 
-        {/* 🎵 SMOOTH MUSIC PLAYER */}
+        {/* 🎵 MUSIC PLAYER */}
         {focusMode && (
-          <div className={`fixed bottom-4 right-4 z-50 w-80 p-4 rounded-2xl shadow-2xl border flex flex-col gap-3 animate-spring origin-bottom-right ${theme === 'darkRed' ? 'bg-black/90 border-red-900' : 'bg-white/90 border-indigo-200 backdrop-blur-xl'}`}>
+          <div className={`fixed bottom-4 right-4 z-40 w-80 p-4 rounded-3xl shadow-2xl border flex flex-col gap-3 animate-spring origin-bottom-right ${theme === 'darkRed' ? 'bg-black/90 border-red-900' : 'bg-white/90 border-indigo-200 backdrop-blur-xl'}`}>
             <iframe 
               className="rounded-xl w-full h-40 shadow-inner"
               src={`https://www.youtube.com/embed/${musicId}?autoplay=1&controls=0&loop=1`} 
               title="Music" 
               allow="autoplay"
             ></iframe>
-            <div className="flex flex-col gap-2">
-              <select 
-                onChange={(e) => setMusicId(e.target.value)} 
-                className="bg-gray-800 text-white text-sm p-2.5 rounded-xl border border-gray-600 outline-none hover:bg-gray-700 transition-colors"
+            <div className="flex flex-col gap-2 relative">
+              
+              {/* MUSIC SELECTOR */}
+              <CustomSelect 
                 value={musicId}
-              >
-                {MUSIC_PRESETS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                <option value="custom">🔗 Custom Link...</option>
-              </select>
+                onChange={setMusicId}
+                options={[
+                  ...MUSIC_PRESETS.map(p => ({ label: p.name, value: p.id })),
+                  { label: "🔗 Custom Link", value: "custom" }
+                ]}
+                t={{ ...t, input: "bg-gray-800 border-gray-600 text-white" }} // Override style for dark player
+              />
+
               <div className="flex gap-2">
                 <input 
                   type="text" 
                   placeholder="Paste YouTube Link..." 
-                  className="bg-gray-800 text-white text-xs p-2.5 rounded-xl flex-1 border border-gray-600 outline-none"
+                  className="bg-gray-800 text-white text-xs p-3 rounded-xl flex-1 border border-gray-600 outline-none"
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
                 />
@@ -337,7 +348,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* 📖 POP-UP DICTIONARY */}
+        {/* 📖 DICTIONARY */}
         {definition && (
           <div className="fixed top-20 right-4 z-50 w-72 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border-l-4 border-yellow-400 animate-pop origin-top-right">
             <div className="flex justify-between items-start mb-2">
@@ -350,8 +361,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* INPUT BOX */}
-        <div className={`p-8 rounded-3xl shadow-xl space-y-6 border ${t.card} mb-10 transition-all duration-300`}>
+        {/* MAIN CARD */}
+        <div className={`p-8 rounded-3xl shadow-xl space-y-6 border ${t.card} mb-10 transition-all duration-300 relative z-10`}>
           
           {/* MODE SWITCHER */}
           <div className={`flex p-1.5 rounded-2xl ${theme === 'darkRed' ? 'bg-gray-800' : 'bg-gray-100'}`}>
@@ -369,18 +380,26 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 relative z-20">
             <div className="flex-1">
               <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Language</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className={`w-full p-4 border-2 rounded-2xl outline-none hover-scale cursor-pointer ${t.input}`}>
-                {LANGUAGES.map((lang) => <option key={lang.code} value={lang.code}>{lang.flag} {lang.code}</option>)}
-              </select>
+              {/* NEW CUSTOM SELECT */}
+              <CustomSelect 
+                value={language}
+                onChange={setLanguage}
+                options={LANGUAGES.map(l => ({ label: `${l.flag} ${l.code}`, value: l.code }))}
+                t={t}
+              />
             </div>
             <div className="flex-1">
               <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Level</label>
-              <select value={level} onChange={(e) => setLevel(e.target.value)} className={`w-full p-4 border-2 rounded-2xl outline-none hover-scale cursor-pointer ${t.input}`}>
-                {["Beginner", "Intermediate", "Expert"].map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
+              {/* NEW CUSTOM SELECT */}
+              <CustomSelect 
+                value={level}
+                onChange={setLevel}
+                options={["Beginner", "Intermediate", "Expert"].map(l => ({ label: l, value: l }))}
+                t={t}
+              />
             </div>
           </div>
 
@@ -413,14 +432,11 @@ export default function Home() {
           {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-pop">❌ {error}</div>}
         </div>
 
-        {/* --- RESULTS AREA (Spring Animation) --- */}
-        
-        {/* CASE A: LESSON MODE */}
+        {/* --- RESULTS AREA --- */}
         {data && data.type === "lesson" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-spring">
             <div className="lg:col-span-2 space-y-6">
               <div className={`p-8 rounded-3xl shadow-lg border-l-8 relative ${t.card} ${t.accent}`}>
-                 <div className="absolute top-4 right-4 text-xs opacity-50 font-bold uppercase tracking-widest">Interactive Text</div>
                 <h2 className={`text-4xl font-extrabold mb-6 ${t.textMain}`}>{data.title}</h2>
                 <div className={`prose prose-lg leading-relaxed mb-6 whitespace-pre-wrap cursor-text selection:bg-yellow-200 selection:text-black ${theme === 'darkRed' ? 'prose-invert text-gray-300' : 'text-gray-600'}`} onDoubleClick={handleWordClick}>
                   {data.explanation}
@@ -463,7 +479,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* CASE B: QUIZ MAKER MODE */}
+        {/* QUIZ MODE */}
         {data && data.type === "quiz" && (
           <div className="space-y-6 animate-spring">
             <div className={`p-8 rounded-3xl shadow-xl border-t-8 ${t.card} ${t.accent}`}>
@@ -482,7 +498,6 @@ export default function Home() {
                         } else {
                            btnClass = "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 text-gray-700";
                         }
-
                         if (quizSubmitted) {
                           if (opt === q.correct_answer) btnClass = "bg-green-600 border-green-500 text-white font-bold shadow-lg scale-[1.02]";
                           else if (opt === quizAnswers[idx]) btnClass = "bg-red-600 border-red-500 text-white opacity-60";
@@ -490,7 +505,6 @@ export default function Home() {
                         } else if (quizAnswers[idx] === opt) {
                           btnClass = `${t.button} border-transparent shadow-md scale-[1.02]`;
                         }
-
                         return (
                           <button 
                             key={opt}
@@ -506,36 +520,78 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-
-              {/* QUIZ CONTROLS */}
               <div className={`mt-10 flex items-center justify-between border-t pt-8 ${theme === 'darkRed' ? 'border-gray-700' : 'border-gray-100'}`}>
                 {!quizSubmitted ? (
-                  <button 
-                    onClick={() => setQuizSubmitted(true)}
-                    className={`px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}
-                  >
+                  <button onClick={() => setQuizSubmitted(true)} className={`px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}>
                     Submit Quiz 📝
                   </button>
                 ) : (
                   <div className="flex items-center gap-6 animate-pop">
                     <span className={`text-3xl font-extrabold ${t.textMain}`}>
-                      Your Score: <span className={calculateScore() >= 3 ? "text-green-500 drop-shadow-sm" : "text-red-500"}>{calculateScore()} / {data.questions.length}</span>
+                      Your Score: <span className={calculateScore() >= 3 ? "text-green-500" : "text-red-500"}>{calculateScore()} / {data.questions.length}</span>
                     </span>
-                    <button 
-                      onClick={startLearning}
-                      className={`underline font-bold text-lg hover-scale ${t.textMain}`}
-                    >
-                      Try Another?
-                    </button>
+                    <button onClick={startLearning} className={`underline font-bold text-lg hover-scale ${t.textMain}`}>Try Another?</button>
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         )}
 
       </div>
+    </div>
+  );
+}
+
+// 💎 NEW CUSTOM DROPDOWN COMPONENT (Animations & Polish)
+function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: any) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
+
+  return (
+    <div className={`relative ${width}`} ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-4 border-2 rounded-2xl outline-none flex justify-between items-center transition-all hover:border-current ${t.input} ${isOpen ? 'ring-4 ring-opacity-10' : ''}`}
+      >
+        <span className="truncate font-medium">{selectedLabel}</span>
+        <svg 
+          className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className={`absolute top-full left-0 mt-2 w-full z-50 rounded-2xl shadow-2xl border overflow-hidden animate-dropdown ${t.card} ${t.textMain}`}>
+          <div className="max-h-60 overflow-y-auto">
+            {options.map((opt: any) => (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${t.dropdownHover || 'hover:bg-gray-100'} ${value === opt.value ? 'font-bold bg-gray-50/50' : ''}`}
+              >
+                {opt.label}
+                {value === opt.value && <span className="text-green-500">✓</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
