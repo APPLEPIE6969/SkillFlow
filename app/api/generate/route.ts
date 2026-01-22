@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 // 1. SETUP SUPABASE
 const supabase = createClient(
@@ -14,32 +15,51 @@ const API_KEYS = [
   process.env.QUIZ,            // Secondary Key
 ].filter(Boolean) as string[]; 
 
-const getRandomKey = () => {
-  const randomIndex = Math.floor(Math.random() * API_KEYS.length);
-  return API_KEYS[randomIndex];
-};
+const getRandomKey = () => API_KEYS[Math.floor(Math.random() * API_KEYS.length)];
 
-// 3. THE COMPLETE MODEL LIST
+// 3. THE COMPLETE MODEL LIST (Restored 100%)
 const MODELS_TO_TRY = [
+  // --- TIER 1: The Best & Newest ---
   "gemini-3-flash-preview",   
   "gemini-2.5-flash",         
   "gemini-2.5-flash-lite",    
+  
+  // --- TIER 2: The Gemma 3 Series (Multimodal) ---
   "gemma-3-27b",              
   "gemma-3-12b",              
   "gemma-3-4b",               
   "gemma-3-2b",               
   "gemma-3-1b",               
+  
+  // --- TIER 3: Safety Nets ---
   "gemini-robotics-er-1.5-preview",
   "gemini-1.5-flash",         
 ];
 
 export async function POST(req: Request) {
   try {
-    const { topic, level, language, fileData, mimeType, mode } = await req.json(); // Added 'mode'
+    // 🛡️ SECURITY LAYER 1: REFERER CHECK
+    const headersList = headers();
+    const referer = (await headersList).get("referer");
+    // Allow localhost (testing) OR your Vercel domain
+    if (referer && !referer.includes("localhost") && !referer.includes("vercel.app")) {
+      return NextResponse.json({ error: "Unauthorized source" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { topic, level, language, fileData, mimeType, mode } = body;
+
+    // 🛡️ SECURITY LAYER 2: INPUT VALIDATION
+    if (topic && topic.length > 500) {
+      return NextResponse.json({ error: "Topic is too long (Max 500 chars)" }, { status: 400 });
+    }
+    if (fileData && fileData.length > 10 * 1024 * 1024) { // 10MB Limit
+      return NextResponse.json({ error: "Image too large" }, { status: 400 });
+    }
+
     const cleanTopic = topic ? topic.trim().toLowerCase() : "uploaded-file";
     
     // Create cache key (Topic + Level + Language + MODE)
-    // We add the mode to the key so "gravity-quiz" is stored separately from "gravity-lesson"
     const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}-${mode || 'lesson'}`;
 
     // =========================================================
@@ -62,11 +82,14 @@ export async function POST(req: Request) {
     // 2. PREPARE PROMPT (Dynamic based on Mode)
     // =========================================================
     let systemPrompt = "";
+    
+    // Safety guardrail
+    const safetyInstruction = "Ensure content is educational, safe for schools, and strictly non-political.";
 
     if (mode === "quiz") {
-      // --- QUIZ MODE PROMPT ---
+      // --- QUIZ MODE ---
       systemPrompt = `
-        You are an expert exam creator.
+        You are an expert exam creator. ${safetyInstruction}
         TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
         STUDENT LEVEL: ${level}.
         TOPIC: "${topic}".
@@ -83,22 +106,23 @@ export async function POST(req: Request) {
               "question": "Question 1 text...",
               "options": ["Option A", "Option B", "Option C", "Option D"],
               "correct_answer": "Option A"
-            },
-            ... (4 more questions)
+            }
+            ... (5 questions total)
           ]
         }
       `;
     } else {
-      // --- LESSON MODE PROMPT (Existing) ---
+      // --- LESSON MODE ---
       systemPrompt = `
-        You are an expert tutor.
+        You are an expert tutor. ${safetyInstruction}
         TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
         STUDENT LEVEL: ${level}.
         TOPIC: "${topic}".
         
         INSTRUCTIONS:
         1. Explain the topic clearly.
-        2. Return strictly valid JSON (no markdown) with this schema:
+        2. If file attached, analyze it.
+        3. Return strictly valid JSON (no markdown) with this schema:
         {
           "title": "Lesson Title in ${language}",
           "type": "lesson",
@@ -123,20 +147,15 @@ export async function POST(req: Request) {
     }
 
     // =========================================================
-    // 3. ASK AI
+    // 3. ASK AI (With Key Rotation + Fallback)
     // =========================================================
     let finalResult = null;
     let lastError = "";
 
     for (const modelName of MODELS_TO_TRY) {
       try {
-        if (fileData && modelName.includes("gemma") && !modelName.includes("flash")) {
-             // Optional: You can keep Gemma disabled for vision if you prefer, 
-             // but Gemma 3 is multimodal so we can try allowing it.
-             // If you want to be safe, uncomment the next line:
-             // continue; 
-        }
-
+        // NOTE: We allow Gemma to see images now (Vision enabled)
+        
         const activeKey = getRandomKey();
         const genAI = new GoogleGenerativeAI(activeKey);
         const model = genAI.getGenerativeModel({ model: modelName });
@@ -150,7 +169,7 @@ export async function POST(req: Request) {
         const text = response.text().replace(/```json|```/g, "").trim();
         
         finalResult = JSON.parse(text);
-        console.log(`✅ Success | Model: ${modelName} (${mode})`);
+        console.log(`✅ Success | Model: ${modelName} | Mode: ${mode}`);
         break;
 
       } catch (error: any) {
