@@ -2,119 +2,148 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// 1. SETUP CLIENTS
-// We use the non-null assertion (!) because we know these exist in .env.local
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+// 1. SETUP SUPABASE
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// 2. THE ULTIMATE FALLBACK LIST
-// The code tries these in order. If one hits a rate limit, it instantly tries the next.
+// 2. SETUP API KEYS (Load Balancing)
+const API_KEYS = [
+  process.env.GOOGLE_API_KEY,  // Main Key
+  process.env.QUIZ,            // Secondary Key
+].filter(Boolean) as string[]; 
+
+const getRandomKey = () => {
+  const randomIndex = Math.floor(Math.random() * API_KEYS.length);
+  return API_KEYS[randomIndex];
+};
+
+// 3. THE CORRECTED MODEL LIST
 const MODELS_TO_TRY = [
-  // --- TIER 1: The Best & Newest (2026 Flagships) ---
-  "gemini-3-flash",           // Your requested top priority
-  "gemini-2.5-flash",         // High speed, high intelligence
-  "gemini-2.5-flash-lite",    // Extremely fast, low latency
+  // --- TIER 1: The Best & Newest ---
+  "gemini-3-flash-preview",   // The specific model you requested
+  "gemini-2.5-flash",         
+  "gemini-2.5-flash-lite",    
   
-  // --- TIER 2: The Gemma 3 Series (Open Models, different quotas) ---
-  "gemma-3-27b",              // Smartest Gemma
-  "gemma-3-12b",              // Balanced
-  "gemma-3-4b",               // Fast
-  "gemma-3-2b",               // Very Fast
-  "gemma-3-1b",               // Lightning Fast
+  // --- TIER 2: The Gemma 3 Series (Great for text) ---
+  "gemma-3-27b",              
+  "gemma-3-12b",              
+  "gemma-3-4b",               
+  "gemma-3-2b",               
+  "gemma-3-1b",               
   
-  // --- TIER 3: Specialized & Legacy (Safety Nets) ---
+  // --- TIER 3: Safety Nets & Robotics ---
   "gemini-robotics-er-1.5-preview",
   "gemini-1.5-flash",         // The old reliable backup
 ];
 
 export async function POST(req: Request) {
   try {
-    const { topic, level } = await req.json();
-    const cleanTopic = topic.trim().toLowerCase();
-    // Create a cache key like: "quantum-physics-beginner"
-    const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}`;
+    const { topic, level, language, fileData, mimeType } = await req.json();
+    const cleanTopic = topic ? topic.trim().toLowerCase() : "uploaded-file";
+    
+    // Create cache key (Topic + Level + Language)
+    const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}`;
 
     // =========================================================
-    // 1. CHECK DATABASE CACHE (Free & Instant)
+    // 1. CHECK CACHE (Only if NO file is uploaded)
     // =========================================================
-    const { data: cached } = await supabase
-      .from("topic_cache")
-      .select("content")
-      .eq("topic_slug", cacheKey)
-      .single();
-
-    if (cached) {
-      console.log(`⚡ CACHE HIT: Served "${cleanTopic}" from database.`);
-      return NextResponse.json(cached.content);
+    if (!fileData) {
+      const { data: cached } = await supabase
+        .from("topic_cache")
+        .select("content")
+        .eq("topic_slug", cacheKey)
+        .single();
+      
+      if (cached) {
+        console.log(`⚡ CACHE HIT: Served "${cleanTopic}" from DB`);
+        return NextResponse.json(cached.content);
+      }
     }
 
     // =========================================================
-    // 2. ASK AI (With "Waterfall" Fallback)
+    // 2. PREPARE PROMPT
     // =========================================================
-    let finalResult = null;
-    let usedModel = "";
-
-    const prompt = `
-      Act as an expert tutor. Create a concise study lesson about "${cleanTopic}" for a student at "${level}" level.
+    const systemPrompt = `
+      You are an expert tutor.
+      TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
+      STUDENT LEVEL: ${level}.
+      TOPIC: "${topic}".
       
-      You must return STRICT JSON format (no markdown backticks). Structure:
+      INSTRUCTIONS:
+      1. If an image/PDF is attached, analyze it thoroughly. Solve math problems step-by-step.
+      2. If no file, explain the topic clearly.
+      3. Return strictly valid JSON (no markdown) with this schema:
       {
-        "title": "A Catchy Title",
-        "explanation": "A clear, 2-paragraph explanation.",
-        "analogy": "A simple real-world analogy to help understand.",
-        "key_points": ["Key Point 1", "Key Point 2", "Key Point 3"],
-        "quiz_question": "A multiple choice question testing this concept.",
-        "options": ["Option A", "Option B", "Option C"],
+        "title": "Title in ${language}",
+        "explanation": "Clear explanation in ${language}...",
+        "analogy": "Analogy in ${language}...",
+        "key_points": ["Point 1", "Point 2"],
+        "quiz_question": "Question in ${language}",
+        "options": ["Option A", "Option B"],
         "correct_answer": "Option A"
       }
     `;
 
-    console.log(`🤖 New Topic: "${cleanTopic}". Starting AI Waterfall...`);
+    const parts: any[] = [{ text: systemPrompt }];
+    if (fileData) {
+      parts.push({
+        inlineData: {
+          data: fileData,
+          mimeType: mimeType || "image/jpeg",
+        },
+      });
+    }
 
-    // Loop through the models list
+    // =========================================================
+    // 3. ASK AI (With Key Rotation + Model Fallback)
+    // =========================================================
+    let finalResult = null;
+    let lastError = "";
+
     for (const modelName of MODELS_TO_TRY) {
       try {
+        // SAFETY: Skip Gemma models if an image is attached (they often crash on vision)
+        if (fileData && modelName.includes("gemma")) {
+          continue; 
+        }
+
+        // ROTATION: Pick a random key for every attempt
+        const activeKey = getRandomKey();
+        const genAI = new GoogleGenerativeAI(activeKey);
         const model = genAI.getGenerativeModel({ model: modelName });
-        
-        // Timeout race: If AI takes > 8 seconds, we kill it and try the next model
+
+        // TIMEOUT: 10 second race to prevent hanging
         const result = await Promise.race([
-          model.generateContent(prompt),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+          model.generateContent({ contents: [{ role: "user", parts: parts }] }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000))
         ]) as any;
 
         const response = await result.response;
-        const text = response.text();
-
-        // Clean up JSON (remove ```json ... ``` wrappers if present)
-        const cleanJson = text.replace(/```json|```/g, "").trim();
-        finalResult = JSON.parse(cleanJson);
-        usedModel = modelName;
+        const text = response.text().replace(/```json|```/g, "").trim();
         
-        console.log(`✅ Success with model: ${modelName}`);
-        break; // Stop the loop, we got the data!
+        finalResult = JSON.parse(text);
+        console.log(`✅ Success | Model: ${modelName} | Key: ...${activeKey.slice(-4)}`);
+        break; // Stop loop
 
-      } catch (error) {
-        // Just log a small warning and continue to the next model
-        console.warn(`⚠️ Model ${modelName} failed or timed out. Switching...`);
+      } catch (error: any) {
+        console.warn(`⚠️ Model ${modelName} failed/skipped. Switching...`);
+        lastError = error.message;
       }
     }
 
-    if (!finalResult) {
-      throw new Error("All AI models are currently busy or out of credits. Please try again later.");
+    if (!finalResult) throw new Error("System busy. Please try again. " + lastError);
+
+    // =========================================================
+    // 4. SAVE TO CACHE (Only if NO file was used)
+    // =========================================================
+    if (!fileData) {
+      await supabase.from("topic_cache").insert({
+        topic_slug: cacheKey,
+        content: finalResult
+      });
     }
-
-    // =========================================================
-    // 3. SAVE TO CACHE (Future users get this for free)
-    // =========================================================
-    const { error: saveError } = await supabase.from("topic_cache").insert({
-      topic_slug: cacheKey,
-      content: finalResult
-    });
-
-    if (saveError) console.error("Cache Save Error:", saveError.message);
 
     return NextResponse.json(finalResult);
 
