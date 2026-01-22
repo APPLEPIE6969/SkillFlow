@@ -41,9 +41,18 @@ const LANGUAGES = [
   { code: "Chinese", flag: "🇨🇳" },
 ];
 
+// 🎵 MUSIC PRESETS
+const MUSIC_PRESETS = [
+  { name: "☕ Lofi Girl", id: "jfKfPfyJRdk" },
+  { name: "🎹 Classical Piano", id: "mIYzp5rcTvU" },
+  { name: "🌧️ Rain Sounds", id: "mPZkdNFkNps" },
+  { name: "🌌 Synthwave", id: "4xDzrJKXOOY" },
+  { name: "🎸 Acoustic", id: "snPH_U16x7I" },
+];
+
 export default function Home() {
   // --- STATE ---
-  const [mode, setMode] = useState<"lesson" | "quiz">("lesson"); // NEW: Mode Switch
+  const [mode, setMode] = useState<"lesson" | "quiz">("lesson");
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [language, setLanguage] = useState("English");
@@ -51,18 +60,19 @@ export default function Home() {
   
   // Data State
   const [data, setData] = useState<LessonData | QuizData | null>(null);
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
   // Quiz State
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null); // For single question (Lesson)
-  const [quizAnswers, setQuizAnswers] = useState<{[key: number]: string}>({}); // For multiple questions (Quiz)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<{[key: number]: string}>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
   // Extras
   const [focusMode, setFocusMode] = useState(false);
+  const [musicId, setMusicId] = useState("jfKfPfyJRdk"); // Default Lofi
+  const [customUrl, setCustomUrl] = useState("");
   const [loadingFact, setLoadingFact] = useState("Did you know? Learning changes your brain structure!");
   const [definition, setDefinition] = useState<WordDef | null>(null);
 
@@ -109,6 +119,19 @@ export default function Home() {
     }
   };
 
+  // 🎵 Helper to get ID from any YouTube URL
+  const handleCustomMusic = () => {
+    // Regex to match YouTube ID
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = customUrl.match(regExp);
+    if (match && match[2].length === 11) {
+      setMusicId(match[2]);
+      setCustomUrl(""); // Clear input
+    } else {
+      alert("Invalid YouTube URL. Try pasting the full link.");
+    }
+  };
+
   // --- MAIN API CALL ---
   const startLearning = async () => {
     if (!topic && !file) {
@@ -145,14 +168,13 @@ export default function Home() {
           language,
           fileData: fileBase64,
           mimeType: mimeType,
-          mode: mode // Send the selected mode!
+          mode: mode
         }),
       });
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed");
       
-      // Force type assignment based on mode request
       if (mode === "quiz") {
         result.type = "quiz";
       } else {
@@ -195,7 +217,7 @@ export default function Home() {
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="text-center md:text-left">
             <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">
-              SkillFlow 6.0 🚀
+              SkillFlow 7.0 🚀
             </h1>
             <p className="text-gray-600">AI Tutor • Quiz Maker • Vision</p>
           </div>
@@ -206,14 +228,49 @@ export default function Home() {
               focusMode ? "bg-indigo-600 text-white animate-pulse" : "bg-white text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {focusMode ? "🎧 Focus Mode ON" : "🎵 Enable Music"}
+            {focusMode ? "🎧 Hide Player" : "🎵 Focus Music"}
           </button>
         </header>
 
-        {/* MUSIC PLAYER */}
+        {/* 🎵 CUSTOM MUSIC PLAYER */}
         {focusMode && (
-          <div className="fixed bottom-4 right-4 z-50 shadow-2xl rounded-xl overflow-hidden border-2 border-indigo-500 bg-black">
-            <iframe width="300" height="80" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0" title="Lofi Music" allow="autoplay"></iframe>
+          <div className="fixed bottom-4 right-4 z-50 w-80 bg-black p-3 rounded-2xl shadow-2xl border-2 border-indigo-500 flex flex-col gap-3 animate-fade-in-up">
+            {/* The Video */}
+            <iframe 
+              className="rounded-xl w-full h-40"
+              src={`https://www.youtube.com/embed/${musicId}?autoplay=1&controls=0&loop=1`} 
+              title="Music" 
+              allow="autoplay"
+            ></iframe>
+            
+            {/* Controls */}
+            <div className="flex flex-col gap-2">
+              <select 
+                onChange={(e) => setMusicId(e.target.value)} 
+                className="bg-gray-800 text-white text-sm p-2 rounded-lg border border-gray-600 outline-none"
+                value={musicId}
+              >
+                {MUSIC_PRESETS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="custom">🔗 Custom Link...</option>
+              </select>
+
+              {/* Custom Input */}
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Paste YouTube Link..." 
+                  className="bg-gray-800 text-white text-xs p-2 rounded-lg flex-1 border border-gray-600 outline-none"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                />
+                <button 
+                  onClick={handleCustomMusic}
+                  className="bg-purple-600 text-white text-xs px-3 rounded-lg font-bold hover:bg-purple-500"
+                >
+                  Play
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
