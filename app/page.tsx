@@ -268,13 +268,18 @@ export default function Home() {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes popIn {
           0% { opacity: 0; transform: scale(0.5); }
           70% { transform: scale(1.05); }
           100% { opacity: 1; transform: scale(1); }
         }
         .animate-spring { animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-dropdown { animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-dropdown-down { animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-dropdown-up { animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .hover-scale { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .hover-scale:hover { transform: scale(1.02); }
@@ -338,6 +343,8 @@ export default function Home() {
               allow="autoplay"
             ></iframe>
             <div className="flex flex-col gap-2 relative">
+              
+              {/* DROPDOWN NOW OPENS UPWARDS */}
               <CustomSelect 
                 value={musicId}
                 onChange={setMusicId}
@@ -346,7 +353,9 @@ export default function Home() {
                   { label: "🔗 Custom Link", value: "custom" }
                 ]}
                 t={{ ...t, input: "bg-gray-800 border-gray-600 text-white" }}
+                direction="up" // <--- Force Up Direction
               />
+
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -363,7 +372,6 @@ export default function Home() {
 
         {/* 📖 RESPONSIVE DICTIONARY */}
         {definition && (
-          // Mobile: Top Center (with margin) | Desktop: Top Right Floating
           <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 z-50 md:w-72 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border-l-4 border-yellow-400 animate-pop">
             <div className="flex justify-between items-start mb-2">
               <h4 className="text-xl font-bold capitalize text-gray-800">{definition.word}</h4>
@@ -551,8 +559,8 @@ export default function Home() {
   );
 }
 
-// 💎 CUSTOM DROPDOWN COMPONENT (With Animations)
-function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
+// 💎 CUSTOM DROPDOWN (Now with UP/DOWN Direction)
+function CustomSelect({ value, onChange, options, t, width = "w-full", direction = "down" }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -567,6 +575,9 @@ function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
   }, []);
 
   const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
+
+  // Decide position class based on direction prop
+  const positionClass = direction === "up" ? "bottom-full mb-2 animate-dropdown-up" : "top-full mt-2 animate-dropdown-down";
 
   return (
     <div className={`relative ${width}`} ref={dropdownRef}>
@@ -584,7 +595,7 @@ function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full left-0 mt-2 w-full z-50 rounded-2xl shadow-2xl border overflow-hidden animate-dropdown ${t.card} ${t.textMain}`}>
+        <div className={`absolute ${positionClass} left-0 w-full z-50 rounded-2xl shadow-2xl border overflow-hidden ${t.card} ${t.textMain}`}>
           <div className="max-h-60 overflow-y-auto">
             {options.map((opt: any) => (
               <div
