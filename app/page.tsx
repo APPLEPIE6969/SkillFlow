@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image"; // <--- ADDED THIS IMPORT
 import { useState, useRef, useEffect } from "react";
 
 // --- TYPES ---
@@ -257,7 +258,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen p-6 font-sans transition-colors duration-700 ease-in-out ${t.bg} ${t.textMain}`}>
-      {/* 🔮 CUSTOM CSS */}
+      {/* 🔮 CUSTOM CSS FOR SMOOTH ANIMATIONS */}
       <style jsx global>{`
         @keyframes slideUpFade {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
@@ -282,17 +283,33 @@ export default function Home() {
 
       <div className="max-w-4xl mx-auto">
         
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <div className="text-center md:text-left">
-            <h1 className={`text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-2`}>
-              SkillFlow 🚀
-            </h1>
-            <p className={`${t.textSec} font-medium`}>AI Tutor • Quiz Maker • Vision</p>
+        {/* HEADER WITH LOGO */}
+        <header className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+          
+          <div className="flex items-center gap-4">
+            {/* The Logo Image */}
+            <div className="relative w-20 h-20 shrink-0 rounded-2xl overflow-hidden shadow-xl border-2 border-white/50 group hover:scale-105 transition-transform duration-300">
+              <Image 
+                src="/logo.png" 
+                alt="SkillFlow Logo" 
+                fill 
+                className="object-cover bg-white" 
+              />
+            </div>
+            
+            {/* The Text */}
+            <div className="text-center md:text-left">
+              <h1 className={`text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-1`}>
+                SkillFlow 🚀
+              </h1>
+              <p className={`${t.textSec} font-medium text-sm tracking-wide`}>
+                The Adaptive AI Learning Ecosystem
+              </p>
+            </div>
           </div>
           
           <div className="flex gap-3 items-center z-50">
-            {/* NEW THEME DROPDOWN */}
+            {/* THEME DROPDOWN */}
             <CustomSelect 
               value={theme}
               onChange={setTheme}
@@ -303,7 +320,7 @@ export default function Home() {
 
             <button
               onClick={() => setFocusMode(!focusMode)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold shadow-lg transition-all btn-press ${
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold shadow-lg transition-all btn-press ${
                 focusMode ? `${t.button} ring-4 ring-opacity-50` : `${t.card} ${t.textMain} hover-scale`
               }`}
             >
@@ -312,7 +329,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* 🎵 MUSIC PLAYER */}
+        {/* 🎵 SMOOTH MUSIC PLAYER */}
         {focusMode && (
           <div className={`fixed bottom-4 right-4 z-40 w-80 p-4 rounded-3xl shadow-2xl border flex flex-col gap-3 animate-spring origin-bottom-right ${theme === 'darkRed' ? 'bg-black/90 border-red-900' : 'bg-white/90 border-indigo-200 backdrop-blur-xl'}`}>
             <iframe 
@@ -331,7 +348,7 @@ export default function Home() {
                   ...MUSIC_PRESETS.map(p => ({ label: p.name, value: p.id })),
                   { label: "🔗 Custom Link", value: "custom" }
                 ]}
-                t={{ ...t, input: "bg-gray-800 border-gray-600 text-white" }} // Override style for dark player
+                t={{ ...t, input: "bg-gray-800 border-gray-600 text-white" }}
               />
 
               <div className="flex gap-2">
@@ -348,7 +365,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* 📖 DICTIONARY */}
+        {/* 📖 POP-UP DICTIONARY */}
         {definition && (
           <div className="fixed top-20 right-4 z-50 w-72 bg-white/95 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border-l-4 border-yellow-400 animate-pop origin-top-right">
             <div className="flex justify-between items-start mb-2">
@@ -361,7 +378,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* MAIN CARD */}
+        {/* INPUT BOX */}
         <div className={`p-8 rounded-3xl shadow-xl space-y-6 border ${t.card} mb-10 transition-all duration-300 relative z-10`}>
           
           {/* MODE SWITCHER */}
@@ -383,7 +400,6 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 relative z-20">
             <div className="flex-1">
               <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Language</label>
-              {/* NEW CUSTOM SELECT */}
               <CustomSelect 
                 value={language}
                 onChange={setLanguage}
@@ -393,7 +409,6 @@ export default function Home() {
             </div>
             <div className="flex-1">
               <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Level</label>
-              {/* NEW CUSTOM SELECT */}
               <CustomSelect 
                 value={level}
                 onChange={setLevel}
@@ -432,11 +447,14 @@ export default function Home() {
           {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-pop">❌ {error}</div>}
         </div>
 
-        {/* --- RESULTS AREA --- */}
+        {/* --- RESULTS AREA (Spring Animation) --- */}
+        
+        {/* CASE A: LESSON MODE */}
         {data && data.type === "lesson" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-spring">
             <div className="lg:col-span-2 space-y-6">
               <div className={`p-8 rounded-3xl shadow-lg border-l-8 relative ${t.card} ${t.accent}`}>
+                 <div className="absolute top-4 right-4 text-xs opacity-50 font-bold uppercase tracking-widest">Interactive Text</div>
                 <h2 className={`text-4xl font-extrabold mb-6 ${t.textMain}`}>{data.title}</h2>
                 <div className={`prose prose-lg leading-relaxed mb-6 whitespace-pre-wrap cursor-text selection:bg-yellow-200 selection:text-black ${theme === 'darkRed' ? 'prose-invert text-gray-300' : 'text-gray-600'}`} onDoubleClick={handleWordClick}>
                   {data.explanation}
@@ -479,7 +497,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* QUIZ MODE */}
+        {/* CASE B: QUIZ MAKER MODE */}
         {data && data.type === "quiz" && (
           <div className="space-y-6 animate-spring">
             <div className={`p-8 rounded-3xl shadow-xl border-t-8 ${t.card} ${t.accent}`}>
@@ -498,6 +516,7 @@ export default function Home() {
                         } else {
                            btnClass = "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 text-gray-700";
                         }
+
                         if (quizSubmitted) {
                           if (opt === q.correct_answer) btnClass = "bg-green-600 border-green-500 text-white font-bold shadow-lg scale-[1.02]";
                           else if (opt === quizAnswers[idx]) btnClass = "bg-red-600 border-red-500 text-white opacity-60";
@@ -505,6 +524,7 @@ export default function Home() {
                         } else if (quizAnswers[idx] === opt) {
                           btnClass = `${t.button} border-transparent shadow-md scale-[1.02]`;
                         }
+
                         return (
                           <button 
                             key={opt}
@@ -520,20 +540,31 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+
+              {/* QUIZ CONTROLS */}
               <div className={`mt-10 flex items-center justify-between border-t pt-8 ${theme === 'darkRed' ? 'border-gray-700' : 'border-gray-100'}`}>
                 {!quizSubmitted ? (
-                  <button onClick={() => setQuizSubmitted(true)} className={`px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}>
+                  <button 
+                    onClick={() => setQuizSubmitted(true)}
+                    className={`px-10 py-4 rounded-2xl font-bold text-xl shadow-xl hover:-translate-y-1 transition-transform btn-press ${t.button}`}
+                  >
                     Submit Quiz 📝
                   </button>
                 ) : (
                   <div className="flex items-center gap-6 animate-pop">
                     <span className={`text-3xl font-extrabold ${t.textMain}`}>
-                      Your Score: <span className={calculateScore() >= 3 ? "text-green-500" : "text-red-500"}>{calculateScore()} / {data.questions.length}</span>
+                      Your Score: <span className={calculateScore() >= 3 ? "text-green-500 drop-shadow-sm" : "text-red-500"}>{calculateScore()} / {data.questions.length}</span>
                     </span>
-                    <button onClick={startLearning} className={`underline font-bold text-lg hover-scale ${t.textMain}`}>Try Another?</button>
+                    <button 
+                      onClick={startLearning}
+                      className={`underline font-bold text-lg hover-scale ${t.textMain}`}
+                    >
+                      Try Another?
+                    </button>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
         )}
@@ -543,7 +574,7 @@ export default function Home() {
   );
 }
 
-// 💎 NEW CUSTOM DROPDOWN COMPONENT (Animations & Polish)
+// 💎 CUSTOM DROPDOWN COMPONENT (With Animations)
 function CustomSelect({ value, onChange, options, t, width = "w-full" }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
