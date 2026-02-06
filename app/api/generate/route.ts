@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import fetch from "node-fetch";
 
 // 1. SETUP SUPABASE
 const supabase = createClient(
@@ -20,21 +21,40 @@ const getRandomKey = () => API_KEYS[Math.floor(Math.random() * API_KEYS.length)]
 // 3. THE COMPLETE MODEL LIST (Restored 100%)
 const MODELS_TO_TRY = [
   // --- TIER 1: The Best & Newest ---
-  "gemini-3-flash-preview",   
-  "gemini-2.5-flash",         
-  "gemini-2.5-flash-lite",    
-  
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+
   // --- TIER 2: The Gemma 3 Series (Multimodal) ---
-  "gemma-3-27b",              
-  "gemma-3-12b",              
-  "gemma-3-4b",               
-  "gemma-3-2b",               
-  "gemma-3-1b",               
-  
+  "gemma-3-27b",
+  "gemma-3-12b",
+  "gemma-3-4b",
+  "gemma-3-2b",
+  "gemma-3-1b",
+
   // --- TIER 3: Safety Nets ---
   "gemini-robotics-er-1.5-preview",
-  "gemini-1.5-flash",         
+  "gemini-1.5-flash",
 ];
+
+// --- VIDEO SEARCH ---
+const searchYouTube = async (query: string): Promise<string> => {
+  try {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) return "";
+
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.items && data.items.length > 0) {
+      return `https://www.youtube.com/watch?v=${data.items[0].id.videoId}`;
+    }
+  } catch (error) {
+    console.log("YouTube search failed:", error);
+  }
+  return "";
+};
 
 export async function POST(req: Request) {
   try {
@@ -86,74 +106,76 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
     // Safety guardrail
     const safetyInstruction = "Ensure content is educational, safe for schools, and strictly non-political.";
 
-    if (mode === "quiz") {
-      // --- QUIZ MODE ---
-      systemPrompt = `
-        You are an expert exam creator. ${safetyInstruction}
-        TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
-        STUDENT LEVEL: ${level}.
-        TOPIC: "${topic}".
-        
-        INSTRUCTIONS:
-        1. Create a Challenging 5-Question Quiz.
-        2. If a file is attached, base questions on the file.
-        3. Return strictly valid JSON (no markdown) with this schema:
-        {
-          "title": "Quiz Title in ${language}",
-          "type": "quiz",
-          "questions": [
-            {
-              "question": "Question 1 text...",
-              "options": ["Option A", "Option B", "Option C", "Option D"],
-              "correct_answer": "Option A"
-            }
-            ... (5 questions total)
-          ]
-        }
-      `;
-    } else {
-// --- LESSON MODE ---
-      systemPrompt = `
-        You are an expert tutor. ${safetyInstruction}
-        TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
-        STUDENT LEVEL: ${level}.
-        EXPLANATION STYLE: ${explanationStyle || 'balanced'}.
-        COMPLEXITY: ${complexity || 'medium'}.
-        FORMAT: ${format || 'paragraph'}.
-        TOPIC: "${topic}".
-        
-        INSTRUCTIONS:
-        1. Explain the topic according to the specified style, complexity, and format.
-        2. If file attached, analyze it.
-        3. Generate the explanation in the requested format:
-           - For "paragraph" format: Write a clear, flowing explanation
-           - For "bullet_points" format: Use concise bullet points
-           - For "step_by_step" format: Break down into numbered steps
-        4. Adjust complexity:
-           - For "low" complexity: Use simple language and basic concepts
-           - For "medium" complexity: Use standard educational language
-           - For "high" complexity: Include technical details and advanced concepts
-        5. Apply explanation style:
-           - For "simple" style: Focus on basic understanding
-           - For "detailed" style: Provide comprehensive coverage
-           - For "technical" style: Include technical terminology and details
-           - For "balanced" style: Mix of all approaches
-        6. Create an appropriate analogy based on the topic and style
-        7. Generate 3-5 key points that summarize the main concepts
-        8. Create a single practice quiz question with 4 options
-        9. Return strictly valid JSON (no markdown) with this schema:
-        {
-          "title": "Lesson Title in ${language}",
-          "type": "lesson",
-          "explanation": "Explanation in ${format} format...",
-          "analogy": "Analogy...",
-          "key_points": ["Point 1", "Point 2"],
-          "quiz_question": "Single practice question",
-          "options": ["A", "B", "C", "D"],
-          "correct_answer": "A"
-        }
-      `;
-    }
+      if (mode === "quiz") {
+        // --- QUIZ MODE ---
+        systemPrompt = `
+          You are an expert exam creator. ${safetyInstruction}
+          TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
+          STUDENT LEVEL: ${level}.
+          TOPIC: "${topic}".
+
+          INSTRUCTIONS:
+          1. Create a Challenging 5-Question Quiz.
+          2. If file attached, base questions on the file.
+          3. Return strictly valid JSON (no markdown) with this schema:
+          {
+            "title": "Quiz Title in ${language}",
+            "type": "quiz",
+            "questions": [
+              {
+                "question": "Question 1 text...",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": "Option A"
+              }
+              ... (5 questions total)
+            ]
+          }
+        `;
+      } else {
+        // --- LESSON MODE ---
+        systemPrompt = `
+          You are an expert tutor. ${safetyInstruction}
+          TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
+          STUDENT LEVEL: ${level}.
+          EXPLANATION STYLE: ${explanationStyle || 'balanced'}.
+          COMPLEXITY: ${complexity || 'medium'}.
+          FORMAT: ${format || 'paragraph'}.
+          TOPIC: "${topic}".
+
+          INSTRUCTIONS:
+          1. Explain the topic according to the specified style, complexity, and format.
+          2. If file attached, analyze it.
+          3. Generate the explanation in the requested format:
+             - For "paragraph" format: Write a clear, flowing explanation
+             - For "bullet_points" format: Use concise bullet points
+             - For "step_by_step" format: Break down into numbered steps
+          4. Adjust complexity:
+             - For "low" complexity: Use simple language and basic concepts
+             - For "medium" complexity: Use standard educational language
+             - For "high" complexity: Include technical details and advanced concepts
+          5. Apply explanation style:
+             - For "simple" style: Focus on basic understanding
+             - For "detailed" style: Provide comprehensive coverage
+             - For "technical" style: Include technical terminology and details
+             - For "balanced" style: Mix of all approaches
+          6. Create an appropriate analogy based on the topic and style
+          7. Generate 3-5 key points that summarize the main concepts
+          8. Create a single practice quiz question with 4 options
+          9. Search for a relevant YouTube video that explains the topic
+          10. Return strictly valid JSON (no markdown) with this schema:
+          {
+            "title": "Lesson Title in ${language}",
+            "type": "lesson",
+            "explanation": "Explanation in ${format} format...",
+            "analogy": "Analogy...",
+            "key_points": ["Point 1", "Point 2"],
+            "quiz_question": "Single practice question",
+            "options": ["A", "B", "C", "D"],
+            "correct_answer": "A",
+            "video_url": "https://www.youtube.com/watch?v=..."
+          }
+        `;
+      }
 
     const parts: any[] = [{ text: systemPrompt }];
     if (fileData) {
@@ -207,6 +229,20 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
         topic_slug: cacheKey,
         content: finalResult
       });
+    }
+
+    // =========================================================
+    // 5. SEARCH FOR VIDEO
+    // =========================================================
+    if (finalResult.type === "lesson" && finalResult.title) {
+      try {
+        const videoUrl = await searchYouTube(finalResult.title);
+        if (videoUrl) {
+          finalResult.video_url = videoUrl;
+        }
+      } catch (error) {
+        console.log("Video search failed:", error);
+      }
     }
 
     return NextResponse.json(finalResult);

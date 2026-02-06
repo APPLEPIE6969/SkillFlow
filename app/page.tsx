@@ -13,6 +13,7 @@ interface LessonData {
   quiz_question: string;
   options: string[];
   correct_answer: string;
+  video_url?: string;
 }
 
 interface QuizData {
@@ -602,9 +603,11 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="bg-black rounded-3xl shadow-2xl overflow-hidden aspect-video ring-4 ring-black/5">
-                <iframe width="100%" height="100%" src={`https://www.youtube.com/embed?listType=search&list=lesson+${topic || data.title}+${level}`} title="Video Lesson" frameBorder="0" allowFullScreen></iframe>
-              </div>
+              {data.video_url && (
+                <div className="bg-black rounded-3xl shadow-2xl overflow-hidden aspect-video ring-4 ring-black/5">
+                  <iframe width="100%" height="100%" src={data.video_url} title="Video Lesson" frameBorder="0" allowFullScreen></iframe>
+                </div>
+              )}
             </div>
             <div className="space-y-6">
               <div className={`p-6 rounded-3xl shadow-md ${t.card}`}>
