@@ -14,7 +14,7 @@ const supabase = createClient(
 const API_KEYS = [
   process.env.GOOGLE_API_KEY,  // Main Key
   process.env.QUIZ,            // Secondary Key
-].filter(Boolean) as string[]; 
+].filter(Boolean) as string[];
 
 const getRandomKey = () => API_KEYS[Math.floor(Math.random() * API_KEYS.length)];
 
@@ -31,6 +31,7 @@ const MODELS_TO_TRY = [
   "gemma-3-4b",
   "gemma-3-2b",
   "gemma-3-1b",
+  "gemma-3-1b",
 
   // --- TIER 3: Safety Nets ---
   "gemini-robotics-er-1.5-preview",
@@ -46,28 +47,21 @@ const searchYouTube = async (query: string): Promise<string> => {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
-
-    if (data.items && data.items.length > 0) {
-      return `https://www.youtube.com/watch?v=${data.items[0].id.videoId}`;
+    if (Array.isArray(data.items) && data.items.length > 0) {
+      return data.items[0].id.videoId;
+    } else {
+      return "";
     }
   } catch (error) {
-    console.log("YouTube search failed:", error);
+    console.error("YouTube search failed:", error);
+    return "";
   }
-  return "";
 };
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    // 🛡️ SECURITY LAYER 1: REFERER CHECK
-    const headersList = headers();
-    const referer = (await headersList).get("referer");
-    // Allow localhost (testing) OR your Vercel domain
-    if (referer && !referer.includes("localhost") && !referer.includes("vercel.app")) {
-      return NextResponse.json({ error: "Unauthorized source" }, { status: 403 });
-    }
-
-    const body = await req.json();
-const { topic, level, language, fileData, mimeType, mode, explanationStyle, complexity, format } = body;
+    const body = await request.json();
+    const { topic, level, language, fileData, mimeType, mode, explanationStyle, complexity, format } = body;
 
     // 🛡️ SECURITY LAYER 2: INPUT VALIDATION
     if (topic && topic.length > 500) {
@@ -78,9 +72,9 @@ const { topic, level, language, fileData, mimeType, mode, explanationStyle, comp
     }
 
     const cleanTopic = topic ? topic.trim().toLowerCase() : "uploaded-file";
-    
-// Create cache key (Topic + Level + Language + MODE + Style)
-const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}-${mode || 'lesson'}-${explanationStyle || 'default'}-${complexity || 'medium'}-${format || 'paragraph'}`;
+
+    // Create cache key (Topic + Level + Language + MODE + Style)
+    const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}-${mode || 'lesson'}-${explanationStyle || 'default'}-${complexity || 'medium'}-${format || 'paragraph'}`;
 
     // =========================================================
     // 1. CHECK CACHE (Only if NO file is uploaded)
@@ -91,7 +85,7 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
         .select("content")
         .eq("topic_slug", cacheKey)
         .single();
-      
+
       if (cached) {
         console.log(`⚡ CACHE HIT: Served "${cleanTopic}" (${mode}) from DB`);
         return NextResponse.json(cached.content);
@@ -102,80 +96,80 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
     // 2. PREPARE PROMPT (Dynamic based on Mode)
     // =========================================================
     let systemPrompt = "";
-    
+
     // Safety guardrail
     const safetyInstruction = "Ensure content is educational, safe for schools, and strictly non-political.";
 
-      if (mode === "quiz") {
-        // --- QUIZ MODE ---
-        systemPrompt = `
-          You are an expert exam creator. ${safetyInstruction}
-          TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
-          STUDENT LEVEL: ${level}.
-          TOPIC: "${topic}".
+    if (mode === "quiz") {
+      // --- QUIZ MODE ---
+      systemPrompt = `
+        You are an expert exam creator. ${safetyInstruction}
+        TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
+        STUDENT LEVEL: ${level}.
+        TOPIC: "${topic}".
 
-          INSTRUCTIONS:
-          1. Create a Challenging 5-Question Quiz.
-          2. If file attached, base questions on the file.
-          3. Return strictly valid JSON (no markdown) with this schema:
-          {
-            "title": "Quiz Title in ${language}",
-            "type": "quiz",
-            "questions": [
-              {
-                "question": "Question 1 text...",
-                "options": ["Option A", "Option B", "Option C", "Option D"],
-                "correct_answer": "Option A"
-              }
-              ... (5 questions total)
-            ]
-          }
-        `;
-      } else {
-        // --- LESSON MODE ---
-        systemPrompt = `
-          You are an expert tutor. ${safetyInstruction}
-          TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
-          STUDENT LEVEL: ${level}.
-          EXPLANATION STYLE: ${explanationStyle || 'balanced'}.
-          COMPLEXITY: ${complexity || 'medium'}.
-          FORMAT: ${format || 'paragraph'}.
-          TOPIC: "${topic}".
+        INSTRUCTIONS:
+        1. Create a Challenging 5-Question Quiz.
+        2. If file attached, base questions on the file.
+        3. Return strictly valid JSON (no markdown) with this schema:
+        {
+          "title": "Quiz Title in ${language}",
+          "type": "quiz",
+          "questions": [
+            {
+              "question": "Question 1 text...",
+              "options": ["Option A", "Option B", "Option C", "Option D"],
+              "correct_answer": "Option A"
+            }
+            ... (5 questions total)
+          ]
+        }
+      `;
+    } else {
+      // --- LESSON MODE ---
+      systemPrompt = `
+        You are an expert tutor. ${safetyInstruction}
+        TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
+        STUDENT LEVEL: ${level}.
+        EXPLANATION STYLE: ${explanationStyle || 'balanced'}.
+        COMPLEXITY: ${complexity || 'medium'}.
+        FORMAT: ${format || 'paragraph'}.
+        TOPIC: "${topic}".
 
-          INSTRUCTIONS:
-          1. Explain the topic according to the specified style, complexity, and format.
-          2. If file attached, analyze it.
-          3. Generate the explanation in the requested format:
-             - For "paragraph" format: Write a clear, flowing explanation
-             - For "bullet_points" format: Use concise bullet points
-             - For "step_by_step" format: Break down into numbered steps
-          4. Adjust complexity:
-             - For "low" complexity: Use simple language and basic concepts
-             - For "medium" complexity: Use standard educational language
-             - For "high" complexity: Include technical details and advanced concepts
-          5. Apply explanation style:
-             - For "simple" style: Focus on basic understanding
-             - For "detailed" style: Provide comprehensive coverage
-             - For "technical" style: Include technical terminology and details
-             - For "balanced" style: Mix of all approaches
-          6. Create an appropriate analogy based on the topic and style
-          7. Generate 3-5 key points that summarize the main concepts
-          8. Create a single practice quiz question with 4 options
-          9. Search for a relevant YouTube video that explains the topic
-          10. Return strictly valid JSON (no markdown) with this schema:
-          {
-            "title": "Lesson Title in ${language}",
-            "type": "lesson",
-            "explanation": "Explanation in ${format} format...",
-            "analogy": "Analogy...",
-            "key_points": ["Point 1", "Point 2"],
-            "quiz_question": "Single practice question",
-            "options": ["A", "B", "C", "D"],
-            "correct_answer": "A",
-            "video_url": "https://www.youtube.com/watch?v=..."
-          }
-        `;
-      }
+        INSTRUCTIONS:
+        1. Explain the topic according to the specified style, complexity, and format.
+        2. If file attached, analyze it.
+        3. Generate the explanation in the requested format:
+           - For "paragraph" format: Write a clear, flowing explanation
+           - For "bullet_points" format: Use concise bullet points
+           - For "step_by_step" format: Break down into numbered steps
+        4. Adjust complexity:
+           - For "low" complexity: Use simple language and basic concepts
+           - For "medium" complexity: Use standard educational language
+           - For "high" complexity: Include technical details and advanced concepts
+        5. Apply explanation style:
+           - For "simple" style: Focus on basic understanding
+           - For "detailed" style: Provide comprehensive coverage
+           - For "technical" style: Include technical terminology and details
+           - For "balanced" style: Mix of all approaches
+        6. Create an appropriate analogy based on the topic and style
+        7. Generate 3-5 key points that summarize the main concepts
+        8. Create a single practice quiz question with 4 options
+        9. Search for a relevant YouTube video that explains the topic
+        10. Return strictly valid JSON (no markdown) with this schema:
+        {
+          "title": "Lesson Title in ${language}",
+          "type": "lesson",
+          "explanation": "Explanation in ${format} format...",
+          "analogy": "Analogy...",
+          "key_points": ["Point 1", "Point 2"],
+          "quiz_question": "Single practice question",
+          "options": ["A", "B", "C", "D"],
+          "correct_answer": "A",
+          "video_url": "https://www.youtube.com/watch?v=..."
+        }
+      `;
+    }
 
     const parts: any[] = [{ text: systemPrompt }];
     if (fileData) {
@@ -196,7 +190,7 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
     for (const modelName of MODELS_TO_TRY) {
       try {
         // NOTE: We allow Gemma to see images now (Vision enabled)
-        
+
         const activeKey = getRandomKey();
         const genAI = new GoogleGenerativeAI(activeKey);
         const model = genAI.getGenerativeModel({ model: modelName });
@@ -208,7 +202,7 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
 
         const response = await result.response;
         const text = response.text().replace(/```json|```/g, "").trim();
-        
+
         finalResult = JSON.parse(text);
         console.log(`✅ Success | Model: ${modelName} | Mode: ${mode}`);
         break;
@@ -238,7 +232,7 @@ const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${la
       try {
         const videoUrl = await searchYouTube(finalResult.title);
         if (videoUrl) {
-          finalResult.video_url = videoUrl;
+          finalResult.video_url = `https://www.youtube.com/watch?v=${videoUrl}`;
         }
       } catch (error) {
         console.log("Video search failed:", error);
