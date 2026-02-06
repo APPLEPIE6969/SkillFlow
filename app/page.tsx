@@ -95,12 +95,27 @@ const THEMES: Record<string, any> = {
     input: "bg-stone-50 border-stone-200 text-stone-800 focus:border-yellow-500",
     highlight: "bg-yellow-100 text-yellow-800",
     dropdownHover: "hover:bg-yellow-100"
+  },
+  oled: {
+    name: "⚫ OLED",
+    bg: "bg-black",
+    card: "bg-gray-900/90 backdrop-blur-md border-gray-700",
+    textMain: "text-gray-200",
+    textSec: "text-gray-400",
+    title: "from-green-400 to-cyan-400",
+    button: "bg-green-600 hover:bg-green-700 text-white shadow-green-900/20",
+    accent: "border-green-500",
+    quizBg: "bg-gray-800 text-cyan-100 border border-gray-700",
+    input: "bg-gray-800 border-gray-700 text-gray-100 focus:border-green-500 placeholder-gray-500",
+    highlight: "bg-green-900/50 text-green-300",
+    dropdownHover: "hover:bg-gray-800"
   }
+};
 };
 
 export default function Home() {
   // --- STATE ---
-  const [theme, setTheme] = useState("default");
+  const [theme, setTheme] = useState("oled");
   const [mode, setMode] = useState<"lesson" | "quiz">("lesson");
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("Beginner");
