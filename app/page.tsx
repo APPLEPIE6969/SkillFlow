@@ -111,7 +111,6 @@ const THEMES: Record<string, any> = {
     dropdownHover: "hover:bg-gray-800"
   }
 };
-};
 
 export default function Home() {
   // --- STATE ---
@@ -714,7 +713,7 @@ export default function Home() {
   );
 }
 
-// 💎 CUSTOM DROPDOWN (Now with UP/DOWN Direction)
+// 💎 CUSTOM DROPDOWN (Now with UP/DOWN DIRECTION)
 function CustomSelect({ value, onChange, options, t, width = "w-full", direction = "down" }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
