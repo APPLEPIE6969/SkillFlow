@@ -46,7 +46,7 @@ const searchYouTube = async (query: string): Promise<string> => {
 
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
     const res = await fetch(url);
-    const data = await res.json();
+const data = await res.json() as { items?: Array<{ id: { videoId: string } }> };
     if (Array.isArray(data.items) && data.items.length > 0) {
       return data.items[0].id.videoId;
     } else {

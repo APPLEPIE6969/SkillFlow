@@ -412,7 +412,7 @@ export default function Home() {
               />
             </div>
             <div className="text-center md:text-left">
-              <h1 className={`text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${t.title} mb-1`}>
+              <h1 className={`text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r ${t.title} mb-1`}>
                 SkillFlow 🚀
               </h1>
               <p className={`${t.textSec} font-medium text-xs md:text-sm tracking-wide`}>
@@ -629,7 +629,7 @@ export default function Home() {
                 <ul className="space-y-4">
                   {data.key_points.map((p, i) => (
                     <li key={i} className={`flex gap-3 text-sm leading-snug ${t.textMain}`}>
-                      <span className={`rounded-full w-6 h-6 flex items-center justify-center text-xs font-extrabold flex-shrink-0 shadow-sm ${t.highlight}`}>{i + 1}</span>{p}
+                      <span className={`rounded-full w-6 h-6 flex items-center justify-center text-xs font-extrabold shrink-0 shadow-sm ${t.highlight}`}>{i + 1}</span>{p}
                     </li>
                   ))}
                 </ul>
