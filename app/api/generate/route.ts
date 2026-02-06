@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { topic, level, language, fileData, mimeType, mode } = body;
+const { topic, level, language, fileData, mimeType, mode, explanationStyle, complexity, format } = body;
 
     // 🛡️ SECURITY LAYER 2: INPUT VALIDATION
     if (topic && topic.length > 500) {
@@ -59,8 +59,8 @@ export async function POST(req: Request) {
 
     const cleanTopic = topic ? topic.trim().toLowerCase() : "uploaded-file";
     
-    // Create cache key (Topic + Level + Language + MODE)
-    const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}-${mode || 'lesson'}`;
+// Create cache key (Topic + Level + Language + MODE + Style)
+const cacheKey = `${cleanTopic.replace(/\s+/g, '-')}-${level.toLowerCase()}-${language.toLowerCase()}-${mode || 'lesson'}-${explanationStyle || 'default'}-${complexity || 'medium'}-${format || 'paragraph'}`;
 
     // =========================================================
     // 1. CHECK CACHE (Only if NO file is uploaded)
@@ -112,25 +112,44 @@ export async function POST(req: Request) {
         }
       `;
     } else {
-      // --- LESSON MODE ---
+// --- LESSON MODE ---
       systemPrompt = `
         You are an expert tutor. ${safetyInstruction}
         TARGET LANGUAGE: ${language} (MUST OUTPUT IN THIS LANGUAGE).
         STUDENT LEVEL: ${level}.
+        EXPLANATION STYLE: ${explanationStyle || 'balanced'}.
+        COMPLEXITY: ${complexity || 'medium'}.
+        FORMAT: ${format || 'paragraph'}.
         TOPIC: "${topic}".
         
         INSTRUCTIONS:
-        1. Explain the topic clearly.
+        1. Explain the topic according to the specified style, complexity, and format.
         2. If file attached, analyze it.
-        3. Return strictly valid JSON (no markdown) with this schema:
+        3. Generate the explanation in the requested format:
+           - For "paragraph" format: Write a clear, flowing explanation
+           - For "bullet_points" format: Use concise bullet points
+           - For "step_by_step" format: Break down into numbered steps
+        4. Adjust complexity:
+           - For "low" complexity: Use simple language and basic concepts
+           - For "medium" complexity: Use standard educational language
+           - For "high" complexity: Include technical details and advanced concepts
+        5. Apply explanation style:
+           - For "simple" style: Focus on basic understanding
+           - For "detailed" style: Provide comprehensive coverage
+           - For "technical" style: Include technical terminology and details
+           - For "balanced" style: Mix of all approaches
+        6. Create an appropriate analogy based on the topic and style
+        7. Generate 3-5 key points that summarize the main concepts
+        8. Create a single practice quiz question with 4 options
+        9. Return strictly valid JSON (no markdown) with this schema:
         {
           "title": "Lesson Title in ${language}",
           "type": "lesson",
-          "explanation": "Clear explanation...",
+          "explanation": "Explanation in ${format} format...",
           "analogy": "Analogy...",
           "key_points": ["Point 1", "Point 2"],
           "quiz_question": "Single practice question",
-          "options": ["A", "B"],
+          "options": ["A", "B", "C", "D"],
           "correct_answer": "A"
         }
       `;

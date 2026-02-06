@@ -105,6 +105,9 @@ export default function Home() {
   const [level, setLevel] = useState("Beginner");
   const [language, setLanguage] = useState("English");
   const [file, setFile] = useState<File | null>(null);
+  const [explanationStyle, setExplanationStyle] = useState("balanced");
+  const [complexity, setComplexity] = useState("medium");
+  const [format, setFormat] = useState("paragraph");
   
   // Data State
   const [data, setData] = useState<LessonData | QuizData | null>(null);
@@ -260,6 +263,7 @@ export default function Home() {
     <div className={`min-h-screen p-4 md:p-6 font-sans transition-colors duration-700 ease-in-out ${t.bg} ${t.textMain}`}>
       {/* 🔮 CUSTOM CSS */}
       <style jsx global>{`
+        /* 💫 Enhanced Animations */
         @keyframes slideUpFade {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
@@ -277,13 +281,104 @@ export default function Home() {
           70% { transform: scale(1.05); }
           100% { opacity: 1; transform: scale(1); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-50px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(50px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-20px); }
+          60% { transform: translateY(-10px); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+          50% { box-shadow: 0 0 20px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.4); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInDown {
+          from { opacity: 0; transform: translateY(-30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes rotateIn {
+          from { opacity: 0; transform: rotate(-180deg) scale(0.5); }
+          to { opacity: 1; transform: rotate(0deg) scale(1); }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        /* 🎨 Enhanced Classes */
         .animate-spring { animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-dropdown-down { animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-dropdown-up { animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .hover-scale { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .hover-scale:hover { transform: scale(1.02); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        .animate-slide-in-left { animation: slideInLeft 0.5s ease-out forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.5s ease-out forwards; }
+        .animate-bounce { animation: bounce 1s infinite; }
+        .animate-pulse { animation: pulse 2s infinite; }
+        .animate-glow { animation: glow 2s infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-slide-in-up { animation: slideInUp 0.5s ease-out forwards; }
+        .animate-slide-in-down { animation: slideInDown 0.5s ease-out forwards; }
+        .animate-rotate-in { animation: rotateIn 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+        /* ✨ Enhanced Hover Effects */
+        .hover-scale { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .hover-scale:hover { transform: scale(1.05); }
+        .hover-glow { transition: all 0.3s ease; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .hover-glow:hover { box-shadow: 0 0 20px rgba(255,255,255,0.4), 0 0 30px rgba(255,255,255,0.2); }
+        .hover-rotate { transition: transform 0.3s ease; }
+        .hover-rotate:hover { transform: rotate(5deg) scale(1.02); }
+        .hover-float { transition: transform 0.3s ease; }
+        .hover-float:hover { transform: translateY(-5px); }
+        .hover-pulse { transition: transform 0.3s ease; }
+        .hover-pulse:hover { transform: scale(1.1); animation: pulse 0.5s; }
+
+        /* ⚡ Enhanced Button Effects */
         .btn-press:active { transform: scale(0.95); }
+        .btn-press { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .btn-press:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .btn-press:active { transform: translateY(-1px) scale(0.98); }
+
+        /* 🌈 Enhanced Card Effects */
+        .card-hover { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        .card-hover:active { transform: translateY(0); }
+
+        /* ✨ Enhanced Text Effects */
+        .text-glow { text-shadow: 0 0 10px rgba(255,255,255,0.3); transition: text-shadow 0.3s ease; }
+        .text-glow:hover { text-shadow: 0 0 20px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.4); }
+
+        /* 🎨 Enhanced Input Effects */
+        .input-glow { transition: all 0.3s ease; box-shadow: 0 0 0 rgba(255,255,255,0.3); }
+        .input-glow:focus { box-shadow: 0 0 10px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.2); }
+
+        /* 🎉 Enhanced Loading Effects */
+        .loading-spinner { animation: rotate 1s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-pulse { animation: pulse 1s infinite; }
       `}</style>
 
       <div className="max-w-4xl mx-auto">
@@ -413,6 +508,48 @@ export default function Home() {
                 value={level}
                 onChange={setLevel}
                 options={["Beginner", "Intermediate", "Expert"].map(l => ({ label: l, value: l }))}
+                t={t}
+              />
+            </div>
+            <div className="flex-1">
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Style</label>
+              <CustomSelect 
+                value={explanationStyle}
+                onChange={setExplanationStyle}
+                options={[
+                  { label: "Balanced", value: "balanced" },
+                  { label: "Simple", value: "simple" },
+                  { label: "Detailed", value: "detailed" },
+                  { label: "Technical", value: "technical" }
+                ]}
+                t={t}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 relative z-20">
+            <div className="flex-1">
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Complexity</label>
+              <CustomSelect 
+                value={complexity}
+                onChange={setComplexity}
+                options={[
+                  { label: "Low", value: "low" },
+                  { label: "Medium", value: "medium" },
+                  { label: "High", value: "high" }
+                ]}
+                t={t}
+              />
+            </div>
+            <div className="flex-1">
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${t.textSec}`}>Format</label>
+              <CustomSelect 
+                value={format}
+                onChange={setFormat}
+                options={[
+                  { label: "Paragraph", value: "paragraph" },
+                  { label: "Bullet Points", value: "bullet_points" },
+                  { label: "Step-by-Step", value: "step_by_step" }
+                ]}
                 t={t}
               />
             </div>
